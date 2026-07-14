@@ -15,6 +15,7 @@ A modular Python application that integrates a backend service, a frontend UI, a
 - [Logging](#logging)
 - [Contributing](#contributing)
 - [License](#license)
+- [Deployment with Docker](#deployment-with-docker)
 
 ## Project Structure
 ```
@@ -49,6 +50,8 @@ c:\Users\solom\OneDrive\Documents\projects\2. MULTI AGENTIC SYSTEM
 - Python 3.11 or newer
 - pip (Python package installer)
 - Git (to clone the repository)
+- Docker installed and running on your machine
+- Access to a container registry (e.g., Docker Hub) if you plan to push the image
 
 ## Installation
 1. **Clone the repository**
@@ -127,3 +130,72 @@ Please follow the existing code style and include unit tests for new functionali
 
 ## License
 This project is licensed under the MIT License. See the `LICENSE` file for details.
+
+## Deployment with Docker
+
+This project can be containerized using Docker, which simplifies deployment and ensures consistent environments across platforms.
+
+### Prerequisites
+- Docker installed and running on your machine.
+- Access to a container registry (e.g., Docker Hub) if you plan to push the image.
+
+### Build the Docker Image
+```bash
+# From the project root directory
+docker build -t multi-agentic-system:latest .
+```
+
+### Run the Container
+```bash
+docker run -d \
+  --name multi-agentic-system \
+  -p 8000:8000 \                # Backend port
+  -p 8501:8501 \                # Frontend port
+  -e GROQ_API_KEY=$GROQ_API_KEY \   # Pass API key (ensure it's set in your environment)
+  -e TAVILY_API_KEY=$TAVILY_API_KEY \ # Pass Tavily API key
+  multi-agentic-system:latest
+```
+
+### Docker Compose (Optional)
+For easier management, a `docker-compose.yml` file is provided:
+```yaml
+version: '3.8'
+services:
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
+  frontend:
+    image: streamlit/streamlit:latest
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./app/frontend:/app/frontend
+    environment:
+      - STREAMLIT_SERVER_PORT=8501
+```
+
+### Push to a Registry (Optional)
+```bash
+docker tag multi-agentic-system:latest your-registry/multi-agentic-system:latest
+docker push your-registry/multi-agentic-system:latest
+```
+
+### Stopping and Removing the Container
+```bash
+docker stop multi-agentic-system
+docker rm multi-agentic-system
+```
+
+### Cleaning Up Images
+```bash
+docker image prune -a
+```
+
+### Production Tips
+- Use a reverse proxy (e.g., Nginx) for TLS termination.
+- Set `restart: always` in Docker Compose for auto‑restart.
+- Store secrets outside the image (e.g., using Docker secrets or environment variables from a `.env` file).
